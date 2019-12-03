@@ -13,8 +13,8 @@ namespace AdventOdCode2019
             var firstWire  = File.ReadAllLines(inputFile).First();
             var secondWire  = File.ReadAllLines(inputFile).Last();
 
-            var allPointsFirst = GetAllWirePoints(firstWire);
-            var allPointsSeconds = GetAllWirePoints(secondWire);
+            var allPointsFirst = GetAllWirePoints(firstWire).ToHashSet();
+            var allPointsSeconds = GetAllWirePoints(secondWire).ToHashSet();
             
             var result = allPointsSeconds
                 .Where(x => allPointsFirst.Contains(x))
@@ -28,8 +28,8 @@ namespace AdventOdCode2019
             var firstWire  = File.ReadAllLines(inputFile).First();
             var secondWire  = File.ReadAllLines(inputFile).Last();
 
-            var allPointsFirst = GetAllWirePoints(firstWire).OrderBy(x => x.Step).ToArray();
-            var allPointsSeconds = GetAllWirePoints(secondWire).OrderBy(x => x.Step).ToArray();
+            var allPointsFirst = GetAllWirePoints(firstWire).OrderBy(x => x.Step).ToHashSet();
+            var allPointsSeconds = GetAllWirePoints(secondWire).OrderBy(x => x.Step).ToHashSet();
             
             var result = GetResults(allPointsSeconds, allPointsFirst).OrderBy(x => x.Steps).First().Steps;
 
