@@ -88,7 +88,7 @@ namespace AdventOdCode2019
             return allPointsFirst;
         }
     }
-        
+
     [DebuggerDisplay("X = {X} Y = {Y}")]
     internal struct Point : IEquatable<Point>
     {
