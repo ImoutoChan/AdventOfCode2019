@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 
 namespace AdventOdCode2019
 {
@@ -49,10 +50,7 @@ namespace AdventOdCode2019
         public string CalculatePart2(string inputFile)
         {
             var orbits = File.ReadAllLines(inputFile);
-
-
-            var dic = new List<(string, string)>();
-
+            
             var nodes = orbits
                 .Select(x => (x.Split(')').First(), x.Split(')').Last())).ToList();
 
@@ -67,44 +65,71 @@ namespace AdventOdCode2019
         private int GetPathToSun(
             (string, string) me, 
             (string, string) sun, 
-            List<(string, string)> nodes)
+            IReadOnlyCollection<(string, string)> nodes)
         {
-            var queue = new Queue<(string Element, int Depth)> ();
-            var alreadyChecked = new List<string>();
+            var nearPoints = nodes
+                             .SelectMany(x => new[] {x.Item1, x.Item2})
+                             .Distinct()
+                             .ToDictionary(
+                                 x => x,
+                                 x => nodes.Where(y => y.Item1 == x).Select(y => y.Item2)
+                                           .Union(nodes.Where(y => y.Item2 == x).Select(y => y.Item1)));
 
-            queue.Enqueue((me.Item1, 0));
+            var graph = new BreadthFirstSearch<string>(s => nearPoints[s]);
 
-            var result = 0;
-            var depthCounter = 0;
+            var result = graph.GetShortestPathLength(me.Item1, s => s == sun.Item1);
+
+            return result;
+        }
+    }
+
+    public class BreadthFirstSearch<TElement>
+    {
+        private readonly Func<TElement, IEnumerable<TElement>> _moveFunc;
+
+        public BreadthFirstSearch(Func<TElement, IEnumerable<TElement>> moveFunc)
+        {
+            _moveFunc = moveFunc;
+        }
+
+        public int GetShortestPathLength(TElement initialElement, Func<TElement, bool> isFinishFunc)
+        {
+            var queue = new Queue<SearchElement<TElement>>();
+            var visited = new List<TElement>();
+
+            queue.Enqueue(new SearchElement<TElement>(initialElement, 0));
+
             while (queue.Any())
             {
-                var element = queue.Dequeue();
+                var current = queue.Dequeue();
 
-                if (sun.Item1 == element.Element)
-                    return element.Depth;
+                if (isFinishFunc(current.Element))
+                    return current.Depth;
 
-                nodes.Where(x => x.Item2 == element.Element)
-                    .Where(x => !alreadyChecked.Contains(x.Item1))
-                    .ToList()
-                    .ForEach(x =>
-                    {
-                        queue.Enqueue((x.Item1, element.Depth + 1));
-                        alreadyChecked.Add(x.Item1);
-                    });
+                visited.Add(current.Element);
 
-                nodes.Where(x => x.Item1 == element.Element)
-                    .Where(x => !alreadyChecked.Contains(x.Item2))
-                    .ToList()
-                    .ForEach(x =>
-                    {
-                        queue.Enqueue((x.Item2, element.Depth + 1));
-                        alreadyChecked.Add(x.Item2);
-                    });
+                var newElements = _moveFunc(current.Element)
+                                  .Where(x => !visited.Contains(x))
+                                  .Select(x => new SearchElement<TElement>(x, current.Depth + 1));
 
-                depthCounter++;
+                foreach (var searchElement in newElements)
+                    queue.Enqueue(searchElement);
             }
 
-            return 0;
+            return -1;
+        }
+
+        private class SearchElement<T>
+        {
+            public SearchElement(T element, int depth)
+            {
+                Element = element;
+                Depth = depth;
+            }
+
+            public T Element { get; }
+
+            public int Depth { get; }
         }
     }
 }

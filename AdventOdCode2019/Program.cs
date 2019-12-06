@@ -22,6 +22,8 @@ namespace AdventOdCode2019
             new Day5().CalculatePart2("input/day5_alex.txt").Dump(nameof(Day5));
             new Day6().CalculatePart1("input/day6.txt").Dump(nameof(Day6));
             new Day6().CalculatePart2("input/day6.txt").Dump(nameof(Day6));
+            new Day6().CalculatePart1("input/day6_alex.txt").Dump(nameof(Day6));
+            new Day6().CalculatePart2("input/day6_alex.txt").Dump(nameof(Day6));
         }
 
         private static void Dump(this object obj, string day) => Console.WriteLine($"{day} {obj}");
