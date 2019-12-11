@@ -68,7 +68,7 @@ namespace AdventOdCode2019
                 0);
         }
 
-        public long? Run(int input)
+        public long? Run(long input)
         {
             var program = _program;
             var inputUsed = false;
