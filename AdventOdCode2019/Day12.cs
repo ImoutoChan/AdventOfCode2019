@@ -73,42 +73,73 @@ namespace AdventOdCode2019
 
     internal struct UniverseState
     {
-        private readonly Moon[] _moons;
+        private readonly Moon _moon1;
+        private readonly Moon _moon2;
+        private readonly Moon _moon3;
+        private readonly Moon _moon4;
 
         public UniverseState(Moon[] moons)
         {
-            _moons = moons;
+            _moon1 = moons[0];
+            _moon2 = moons[1];
+            _moon3 = moons[2];
+            _moon4 = moons[3];
+        }
+
+        public UniverseState(UniverseState state)
+        {
+            _moon1 = state._moon1;
+            _moon2 = state._moon2;
+            _moon3 = state._moon3;
+            _moon4 = state._moon4;
+        }
+
+        public UniverseState(Moon moon1, Moon moon2, Moon moon3, Moon moon4)
+        {
+            _moon1 = moon1;
+            _moon2 = moon2;
+            _moon3 = moon3;
+            _moon4 = moon4;
         }
 
         public UniverseState ApplyGravity()
         {
-            var newState = _moons.ToArray();
-            for (var i = 0; i < newState.Length; i++)
-            {
-                for (var j = 0; j < newState.Length; j++)
-                {
-                    if (j == i)
-                        continue;
-                    newState[i] = newState[i].ApplyGravity(newState[j]);
-                }
-            }
-            return new UniverseState(newState);
+            var moon1 = _moon1;
+            var moon2 = _moon2;
+            var moon3 = _moon3;
+            var moon4 = _moon4;
+
+            moon1 = moon1.ApplyGravity(moon2);
+            moon1 = moon1.ApplyGravity(moon3);
+            moon1 = moon1.ApplyGravity(moon4);
+            moon2 = moon2.ApplyGravity(moon1);
+            moon2 = moon2.ApplyGravity(moon3);
+            moon2 = moon2.ApplyGravity(moon4);
+            moon3 = moon3.ApplyGravity(moon1);
+            moon3 = moon3.ApplyGravity(moon2);
+            moon3 = moon3.ApplyGravity(moon4);
+            moon4 = moon4.ApplyGravity(moon1);
+            moon4 = moon4.ApplyGravity(moon2);
+            moon4 = moon4.ApplyGravity(moon3);
+
+            return new UniverseState(moon1, moon2, moon3, moon4);
         }
 
-        public UniverseState MoveSystem()
-        {
-            var newState = _moons.ToArray();
-            for (var index = 0; index < newState.Length; index++)
-                newState[index] = newState[index].Move();
+        public UniverseState MoveSystem() 
+            => new UniverseState(_moon1.Move(), _moon2.Move(), _moon3.Move(), _moon4.Move());
 
-            return new UniverseState(newState);
-        }
-
-        public int GetEnergy() => _moons.Sum(x => x.GetEnergy());
+        public int GetEnergy() 
+            => _moon1.GetEnergy() 
+               + _moon2.GetEnergy() 
+               + _moon3.GetEnergy() 
+               + _moon4.GetEnergy();
 
         public bool Equals(UniverseState other)
         {
-            return Equals(_moons, other._moons);
+            return _moon1.Equals(other._moon1) 
+                   && _moon2.Equals(other._moon2) 
+                   && _moon3.Equals(other._moon3) 
+                   && _moon4.Equals(other._moon4);
         }
 
         public override bool Equals(object obj)
@@ -118,17 +149,12 @@ namespace AdventOdCode2019
 
         public override int GetHashCode()
         {
-            return (_moons != null ? GetHashCode(_moons) : 0);
-        }
-
-        private int GetHashCode(Moon[] moons)
-        {
             unchecked
             {
-                var hashCode = moons[0].GetHashCode();
-                hashCode = (hashCode * 397) ^ moons[1].GetHashCode();
-                hashCode = (hashCode * 397) ^ moons[2].GetHashCode();
-                hashCode = (hashCode * 397) ^ moons[3].GetHashCode();
+                var hashCode = _moon1.GetHashCode();
+                hashCode = (hashCode * 397) ^ _moon2.GetHashCode();
+                hashCode = (hashCode * 397) ^ _moon3.GetHashCode();
+                hashCode = (hashCode * 397) ^ _moon4.GetHashCode();
                 return hashCode;
             }
         }
@@ -144,7 +170,7 @@ namespace AdventOdCode2019
 
         public D3Point Velocity { get; }
 
-        public Moon ApplyGravity(Moon byMoon)
+        public readonly Moon ApplyGravity(Moon byMoon)
         {
             return new Moon(Position, Velocity.Mutate(
                 GetMutator(Position.X, byMoon.Position.X),
@@ -159,11 +185,11 @@ namespace AdventOdCode2019
                            : 0;
         }
 
-        public Moon Move() => new Moon(Position.Mutate(Velocity), Velocity);
+        public readonly Moon Move() => new Moon(Position.Mutate(Velocity), Velocity);
 
-        public int GetEnergy() => Position.GetEnergy() * Velocity.GetEnergy();
+        public readonly int GetEnergy() => Position.GetEnergy() * Velocity.GetEnergy();
 
-        public bool Equals(Moon other)
+        public readonly bool Equals(Moon other)
         {
             return Position.Equals(other.Position) && Velocity.Equals(other.Velocity);
         }
