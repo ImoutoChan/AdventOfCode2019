@@ -12,45 +12,45 @@ namespace AdventOdCode2019
         public string CalculatePart1(string inputFile)
         {
             var moons = GetMoons(inputFile);
-            
+
+            var uni = new UniverseState(moons.ToArray());
+
             for (int i = 0; i < 1000; i++)
             {
-                for (var index = 0; index < moons.Length; index++)
-                {
-                    var otherMoons = moons.Except(new[] { moons[index] });
-
-                    foreach (var otherMoon in otherMoons)
-                        moons[index] = moons[index].ApplyGravity(otherMoon);
-                }
-
-                for (var index = 0; index < moons.Length; index++)
-                {
-                    moons[index] = moons[index].Move();
-                }
+                uni = uni.ApplyGravity();
+                uni = uni.MoveSystem();
             }
-            
-            return moons.Sum(x => x.GetEnergy()).ToString();
+
+            return uni.GetEnergy().ToString();
         }
 
         public string CalculatePart2(string inputFile)
         {
             var moons = GetMoons(inputFile);
 
-            for (int i = 0; i < 1000; i++)
-            {
-                foreach (var moon in moons)
-                {
-                    var otherMoons = moons.Except(new[] { moon });
+            var uni = new UniverseState(moons.ToArray());
+            var hashset = new HashSet<UniverseState>();
+            var counter = 0;
 
-                    foreach (var otherMoon in otherMoons)
-                        moon.ApplyGravity(otherMoon);
+            var sw = new Stopwatch();
+            sw.Start();
+            while(true)
+            {
+                counter++;
+                if (counter % 100_000 == 0)
+                {
+                    Console.WriteLine(counter + " " + sw.ElapsedMilliseconds);
+                    sw.Reset();
+                    sw.Start();
                 }
 
-                foreach (var moon in moons)
-                    moon.Move();
-            }
 
-            return moons.Sum(x => x.GetEnergy()).ToString();
+                uni = uni.ApplyGravity().MoveSystem();
+                if (hashset.Contains(uni))
+                    return counter.ToString();
+
+                hashset.Add(uni);
+            }
         }
 
         private static Moon[] GetMoons(string inputFile)
@@ -71,6 +71,68 @@ namespace AdventOdCode2019
         }
     }
 
+    internal struct UniverseState
+    {
+        private readonly Moon[] _moons;
+
+        public UniverseState(Moon[] moons)
+        {
+            _moons = moons;
+        }
+
+        public UniverseState ApplyGravity()
+        {
+            var newState = _moons.ToArray();
+            for (var i = 0; i < newState.Length; i++)
+            {
+                for (var j = 0; j < newState.Length; j++)
+                {
+                    if (j == i)
+                        continue;
+                    newState[i] = newState[i].ApplyGravity(newState[j]);
+                }
+            }
+            return new UniverseState(newState);
+        }
+
+        public UniverseState MoveSystem()
+        {
+            var newState = _moons.ToArray();
+            for (var index = 0; index < newState.Length; index++)
+                newState[index] = newState[index].Move();
+
+            return new UniverseState(newState);
+        }
+
+        public int GetEnergy() => _moons.Sum(x => x.GetEnergy());
+
+        public bool Equals(UniverseState other)
+        {
+            return Equals(_moons, other._moons);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is UniverseState other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return (_moons != null ? GetHashCode(_moons) : 0);
+        }
+
+        private int GetHashCode(Moon[] moons)
+        {
+            unchecked
+            {
+                var hashCode = moons[0].GetHashCode();
+                hashCode = (hashCode * 397) ^ moons[1].GetHashCode();
+                hashCode = (hashCode * 397) ^ moons[2].GetHashCode();
+                hashCode = (hashCode * 397) ^ moons[3].GetHashCode();
+                return hashCode;
+            }
+        }
+    }
 
     [DebuggerDisplay("Pos= {Position.X} {Position.Y} {Position.Z} Vel = {Velocity.X} {Velocity.Y} {Velocity.Z}")]
     internal struct Moon
@@ -78,9 +140,9 @@ namespace AdventOdCode2019
         public Moon(D3Point position, D3Point velocity)
             => (Position, Velocity) = (position, velocity);
 
-        public D3Point Position { get; private set; }
+        public D3Point Position { get; }
 
-        public D3Point Velocity { get; private set; }
+        public D3Point Velocity { get; }
 
         public Moon ApplyGravity(Moon byMoon)
         {
@@ -100,6 +162,24 @@ namespace AdventOdCode2019
         public Moon Move() => new Moon(Position.Mutate(Velocity), Velocity);
 
         public int GetEnergy() => Position.GetEnergy() * Velocity.GetEnergy();
+
+        public bool Equals(Moon other)
+        {
+            return Position.Equals(other.Position) && Velocity.Equals(other.Velocity);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is Moon other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                return (Position.GetHashCode() * 397) ^ Velocity.GetHashCode();
+            }
+        }
     }
 
     internal struct D3Point
@@ -122,5 +202,26 @@ namespace AdventOdCode2019
             => new D3Point(X + mutator.X, Y + mutator.Y, Z + mutator.Z);
 
         public int GetEnergy() => Math.Abs(X) + Math.Abs(Y) + Math.Abs(Z);
+
+        public bool Equals(D3Point other)
+        {
+            return X == other.X && Y == other.Y && Z == other.Z;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is D3Point other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            unchecked
+            {
+                var hashCode = X;
+                hashCode = (hashCode * 397) ^ Y;
+                hashCode = (hashCode * 397) ^ Z;
+                return hashCode;
+            }
+        }
     }
 }
