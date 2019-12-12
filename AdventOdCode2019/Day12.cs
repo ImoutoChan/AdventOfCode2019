@@ -1,10 +1,7 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Numerics;
-using System.Runtime.Intrinsics;
 
 namespace AdventOdCode2019
 {
@@ -78,37 +75,6 @@ namespace AdventOdCode2019
             return sum;
         }
 
-        //public string CalculatePart2(string inputFile)
-        //{
-        //    var moons = GetMoons(inputFile);
-
-        //    var uni = new UniverseState(moons.ToArray());
-        //    var hashset = new HashSet<UniverseState>();
-        //    var counter = 0;
-
-        //    var sw = new Stopwatch();
-        //    sw.Start();
-        //    while(true)
-        //    {
-        //        counter++;
-        //        if (counter % 100_000 == 0)
-        //        {
-        //            Console.WriteLine(counter + " " + sw.ElapsedMilliseconds);
-        //            sw.Reset();
-        //            sw.Start();
-        //        }
-
-
-        //        uni.ApplyGravity();
-        //        uni.MoveSystem();
-
-        //        if (hashset.Contains(uni))
-        //            return counter.ToString();
-
-        //        hashset.Add(uni);
-        //    }
-        //}
-
         public string CalculatePart2(string inputFile)
         {
             var moons = GetMoons(inputFile);
@@ -132,8 +98,10 @@ namespace AdventOdCode2019
                 initialState[i, 5] = moons[i].Velocity.Z;
             }
 
-            long counter = 0;
-            var comparer = new ArrayComparer();
+            var counter = 0;
+            var xCycle = 0;
+            var yCycle = 0;
+            var zCycle = 0;
 
             var sw = new Stopwatch();
             sw.Start();
@@ -142,7 +110,7 @@ namespace AdventOdCode2019
                 counter++;
                 if (counter % 1_000_000 == 0)
                 {
-                    Console.WriteLine(counter / 1_000_000 + " " + sw.ElapsedMilliseconds);
+                    Console.WriteLine(counter + " " + sw.ElapsedMilliseconds);
                     sw.Reset();
                     sw.Start();
                 }
@@ -175,117 +143,45 @@ namespace AdventOdCode2019
                     }
                 }
 
-                if (comparer.Equals(state, initialState))
-                    return (counter - 1).ToString();
+                // check
+                for (int i = 0; i < 4; i++)
+                {
+                    if (xCycle == 0 && state[0, 3] == 0 && state[1, 3] == 0 && state[2, 3] == 0)
+                        xCycle = counter * 2;
+                    if (yCycle == 0 && state[0, 4] == 0 && state[1, 4] == 0 && state[2, 4] == 0)
+                        yCycle = counter * 2;
+                    if (zCycle == 0 && state[0, 5] == 0 && state[1, 5] == 0 && state[2, 5] == 0)
+                        zCycle = counter * 2;
+                }
 
-                //hashset.Add(tuple);
+                if (xCycle != 0 && yCycle != 0 && zCycle != 0)
+                    break;
             }
+
+            return FindLcm(xCycle, yCycle, zCycle).ToString();
         }
 
-        public string CalculatePart2Vectors(string inputFile)
+        private long FindLcm(params long[] values)
         {
-            int vectorSize = Vector<int>.Count;
+            if (values.Length > 2)
+                return FindLcm(values[0], FindLcm(values.Skip(1).ToArray()));
 
-            var moons = GetMoons(inputFile);
-            
-            var stateVec = new Vector<int>[4][];
-            var initStateVec = new Vector<int>[4][];
+            return values[0] * values[1] / FindGcd(values[0], values[1]);
+        }
 
-            for (var i = 0; i < moons.Length; i++)
-            {
-                var moonPosition = new[]
-                {
-                    moons[i].Position.X,
-                    moons[i].Position.Y,
-                    moons[i].Position.Z,
-                    0,
-                    0,
-                    0,
-                    0, 
-                    0
-                };
-                var moonVelocity = new[]
-                {
-                    moons[i].Velocity.X,
-                    moons[i].Velocity.Y,
-                    moons[i].Velocity.Z,
-                    0,
-                    0,
-                    0,
-                    0, 
-                    0
-                };
-                var moonPosVec = new Vector<int>(moonPosition);
-                var moonVelVec = new Vector<int>(moonVelocity);
-                stateVec[i] = new Vector<int>[2];
-                stateVec[i][0] = moonPosVec;
-                stateVec[i][1] = moonVelVec;
-                initStateVec[i] = new Vector<int>[2];
-                initStateVec[i][0] = moonPosVec;
-                initStateVec[i][1] = moonVelVec;
-            }
-            
-            long counter = 0;
-            var comparer = new ArrayComparer();
-
-            var sw = new Stopwatch();
-            sw.Start();
-            while(true)
-            {
-                counter++;
-                if (counter % 10_000_000 == 0)
-                {
-                    Console.WriteLine(counter / 10_000_000 + " " + sw.ElapsedMilliseconds);
-                    sw.Reset();
-                    sw.Start();
-                }
-
-                // gravity
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 4; j++)
-                    {
-                        if (i == j)
-                            continue;
-
-                        var greater = Vector.GreaterThan(stateVec[j][0], stateVec[i][0]);
-                        var less = Vector.LessThan(stateVec[j][0], stateVec[i][0]);
-
-                        stateVec[i][1] = Vector.Add(stateVec[i][1], less);
-                        stateVec[i][1] = Vector.Add(stateVec[i][1], Vector.Multiply(greater, -1));
-                    }
-                }
-
-                // move
-                for (int i = 0; i < 4; i++)
-                {
-                    stateVec[i][0] = Vector.Add(stateVec[i][1], stateVec[i][0]);
-                }
-
-                var eq = true;
-                for (int i = 0; i < 4; i++)
-                {
-                    if (!Vector.EqualsAll(stateVec[i][0], initStateVec[i][0])
-                        || !Vector.EqualsAll(stateVec[i][1], initStateVec[i][1]))
-                    {
-                        eq = false;
-                        break;
-                    }
-                }
-
-                if (eq)
-                    return counter.ToString();
-
-                //hashset.Add(tuple);
-            }
+        static long FindGcd(long a, long b)
+        {
+            if (b == 0)
+                return a;
+            return FindGcd(b, a % b);
         }
 
         private static Moon[] GetMoons(string inputFile)
         {
             var moonConfiguration = File.ReadAllLines(inputFile);
-            //var moonConfiguration =
-            //    "<x=-8, y=-10, z=0>\r\n<x=5, y=5, z=10>\r\n<x=2, y=-7, z=3>\r\n<x=9, y=-8, z=-3>"
-            //    .Split(new[] { Environment.NewLine }, StringSplitOptions.None);
+            //var moonConfiguration = 
+            //    "<x=-1, y=0, z=2>\r\n<x=2, y=-10, z=-7>\r\n<x=4, y=-8, z=8>\r\n<x=3, y=5, z=-1>"
+            //    .Split(new [] {Environment.NewLine}, StringSplitOptions.None);
 
 
             var moons = moonConfiguration
@@ -300,155 +196,6 @@ namespace AdventOdCode2019
                           .ToArray();
             return moons;
         }
-    }
-
-    class ArrayComparer : IEqualityComparer<int[,]>
-    {
-        public bool Equals(int[,] x, int[,] y)
-        {
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 6; j++)
-                {
-                    if (x[i, j] != y[i, j])
-                        return false;
-                    
-                }
-            }
-
-            return true;
-        }
-
-        public int GetHashCode(int[,] obj)
-        {
-            
-            unchecked
-            {
-                var hashCode = 0;
-                for (int i = 0; i < 4; i++)
-                {
-                    for (int j = 0; j < 6; j++)
-                    {
-                        hashCode = (hashCode * 397) ^ obj[i, j].GetHashCode();
-                    }
-                }
-                return hashCode;
-            }
-        }
-    }
-
-    internal class UniverseState
-    {
-        protected bool Equals(UniverseState other)
-        {
-            return Equals(_moon1, other._moon1) 
-                   && Equals(_moon2, other._moon2) 
-                   && Equals(_moon3, other._moon3) 
-                   && Equals(_moon4, other._moon4);
-        }
-
-        public override bool Equals(object obj)
-        {
-            if (ReferenceEquals(null, obj))
-                return false;
-            if (ReferenceEquals(this, obj))
-                return true;
-            if (obj.GetType() != this.GetType())
-                return false;
-            return Equals((UniverseState) obj);
-        }
-
-        public override int GetHashCode()
-        {
-            unchecked
-            {
-                var hashCode = 0;
-                hashCode = (hashCode * 397) ^ _moon1.Position.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon1.Position.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon1.Position.Z.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon1.Velocity.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon1.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon1.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Position.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Position.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Position.Z.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Velocity.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon2.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Position.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Position.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Position.Z.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Velocity.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon3.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Position.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Position.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Position.Z.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Velocity.X.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Velocity.Y.GetHashCode();
-                hashCode = (hashCode * 397) ^ _moon4.Velocity.Y.GetHashCode();
-                return hashCode;
-            }
-        }
-
-        private Moon _moon1;
-        private Moon _moon2;
-        private Moon _moon3;
-        private Moon _moon4;
-
-        public UniverseState(Moon[] moons)
-        {
-            _moon1 = moons[0];
-            _moon2 = moons[1];
-            _moon3 = moons[2];
-            _moon4 = moons[3];
-        }
-
-        public UniverseState(UniverseState state)
-        {
-            _moon1 = state._moon1;
-            _moon2 = state._moon2;
-            _moon3 = state._moon3;
-            _moon4 = state._moon4;
-        }
-
-        public UniverseState(Moon moon1, Moon moon2, Moon moon3, Moon moon4)
-        {
-            _moon1 = moon1;
-            _moon2 = moon2;
-            _moon3 = moon3;
-            _moon4 = moon4;
-        }
-
-        public void ApplyGravity()
-        {
-            _moon1.ApplyGravity(_moon2);
-            _moon1.ApplyGravity(_moon3);
-            _moon1.ApplyGravity(_moon4);
-            _moon2.ApplyGravity(_moon1);
-            _moon2.ApplyGravity(_moon3);
-            _moon2.ApplyGravity(_moon4);
-            _moon3.ApplyGravity(_moon1);
-            _moon3.ApplyGravity(_moon2);
-            _moon3.ApplyGravity(_moon4);
-            _moon4.ApplyGravity(_moon1);
-            _moon4.ApplyGravity(_moon2);
-            _moon4.ApplyGravity(_moon3);
-        }
-
-        public void MoveSystem()
-        {
-            _moon1.Move();
-            _moon2.Move();
-            _moon3.Move();
-            _moon4.Move();
-        }
-
-        public int GetEnergy() 
-            => _moon1.GetEnergy() 
-               + _moon2.GetEnergy() 
-               + _moon3.GetEnergy() 
-               + _moon4.GetEnergy();
     }
 
     [DebuggerDisplay("Pos= {Position.X} {Position.Y} {Position.Z} Vel = {Velocity.X} {Velocity.Y} {Velocity.Z}")]
@@ -474,7 +221,9 @@ namespace AdventOdCode2019
         {
             unchecked
             {
-                return ((Position != null ? Position.GetHashCode() : 0) * 397) ^ (Velocity != null ? Velocity.GetHashCode() : 0);
+                return ((Position != null 
+                            ? Position.GetHashCode() : 0) * 397) ^ (Velocity != null ? Velocity.GetHashCode() 
+                           : 0);
             }
         }
 
