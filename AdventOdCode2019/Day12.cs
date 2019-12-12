@@ -117,6 +117,7 @@ namespace AdventOdCode2019
             var moons = GetMoons(inputFile);
             
             var state = new int[4, 6];
+            var initialState = new int[4, 6];
 
             for (var i = 0; i < moons.Length; i++)
             {
@@ -126,18 +127,26 @@ namespace AdventOdCode2019
                 state[i, 3] = moons[i].Velocity.X;
                 state[i, 4] = moons[i].Velocity.Y;
                 state[i, 5] = moons[i].Velocity.Z;
+                initialState[i, 0] = moons[i].Position.X;
+                initialState[i, 1] = moons[i].Position.Y;
+                initialState[i, 2] = moons[i].Position.Z;
+                initialState[i, 3] = moons[i].Velocity.X;
+                initialState[i, 4] = moons[i].Velocity.Y;
+                initialState[i, 5] = moons[i].Velocity.Z;
             }
-            
-            var hashset = new HashSet<(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,
-                int, int, int, int)>();
+
+            //var hashset = new HashSet<(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,
+            //    int, int, int, int)>();
+            //hashset.Add(GetTuple(state));
             var counter = 0;
+            var comparer = new ArrayComparer();
 
             var sw = new Stopwatch();
             sw.Start();
             while(true)
             {
                 counter++;
-                if (counter % 100_000 == 0)
+                if (counter % 1_000_000 == 0)
                 {
                     Console.WriteLine(counter + " " + sw.ElapsedMilliseconds);
                     sw.Reset();
@@ -172,11 +181,10 @@ namespace AdventOdCode2019
                     }
                 }
 
-                var tuple = GetTuple(state);
-                if (hashset.Contains(tuple))
+                if (comparer.Equals(state, initialState))
                     return (counter - 1).ToString();
 
-                hashset.Add(tuple);
+                //hashset.Add(tuple);
             }
         }
 
