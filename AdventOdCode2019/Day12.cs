@@ -1,13 +1,10 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.Intrinsics;
-using System.Runtime.Intrinsics.X86;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
 
 namespace AdventOdCode2019
 {
@@ -135,10 +132,7 @@ namespace AdventOdCode2019
                 initialState[i, 5] = moons[i].Velocity.Z;
             }
 
-            //var hashset = new HashSet<(int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int,
-            //    int, int, int, int)>();
-            //hashset.Add(GetTuple(state));
-            var counter = 0;
+            long counter = 0;
             var comparer = new ArrayComparer();
 
             var sw = new Stopwatch();
@@ -148,7 +142,7 @@ namespace AdventOdCode2019
                 counter++;
                 if (counter % 1_000_000 == 0)
                 {
-                    Console.WriteLine(counter + " " + sw.ElapsedMilliseconds);
+                    Console.WriteLine(counter / 1_000_000 + " " + sw.ElapsedMilliseconds);
                     sw.Reset();
                     sw.Start();
                 }
@@ -188,14 +182,110 @@ namespace AdventOdCode2019
             }
         }
 
-        private (int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int, int) GetTuple(int[,] state) => (state[0, 0], state[0, 1], state[0, 2], state[0, 3], state[0, 4], state[0, 5], state[1, 0], state[1, 1], state[1, 2], state[1, 3], state[1, 4], state[1, 5], state[2, 0], state[2, 1], state[2, 2], state[2, 3], state[2, 4], state[2, 5], state[3, 0], state[3, 1], state[3, 2], state[3, 3], state[3, 4], state[3, 5]);
+        public string CalculatePart2Vectors(string inputFile)
+        {
+            int vectorSize = Vector<int>.Count;
+
+            var moons = GetMoons(inputFile);
+            
+            var stateVec = new Vector<int>[4][];
+            var initStateVec = new Vector<int>[4][];
+
+            for (var i = 0; i < moons.Length; i++)
+            {
+                var moonPosition = new[]
+                {
+                    moons[i].Position.X,
+                    moons[i].Position.Y,
+                    moons[i].Position.Z,
+                    0,
+                    0,
+                    0,
+                    0, 
+                    0
+                };
+                var moonVelocity = new[]
+                {
+                    moons[i].Velocity.X,
+                    moons[i].Velocity.Y,
+                    moons[i].Velocity.Z,
+                    0,
+                    0,
+                    0,
+                    0, 
+                    0
+                };
+                var moonPosVec = new Vector<int>(moonPosition);
+                var moonVelVec = new Vector<int>(moonVelocity);
+                stateVec[i] = new Vector<int>[2];
+                stateVec[i][0] = moonPosVec;
+                stateVec[i][1] = moonVelVec;
+                initStateVec[i] = new Vector<int>[2];
+                initStateVec[i][0] = moonPosVec;
+                initStateVec[i][1] = moonVelVec;
+            }
+            
+            long counter = 0;
+            var comparer = new ArrayComparer();
+
+            var sw = new Stopwatch();
+            sw.Start();
+            while(true)
+            {
+                counter++;
+                if (counter % 10_000_000 == 0)
+                {
+                    Console.WriteLine(counter / 10_000_000 + " " + sw.ElapsedMilliseconds);
+                    sw.Reset();
+                    sw.Start();
+                }
+
+                // gravity
+                for (int i = 0; i < 4; i++)
+                {
+                    for (int j = 0; j < 4; j++)
+                    {
+                        if (i == j)
+                            continue;
+
+                        var greater = Vector.GreaterThan(stateVec[j][0], stateVec[i][0]);
+                        var less = Vector.LessThan(stateVec[j][0], stateVec[i][0]);
+
+                        stateVec[i][1] = Vector.Add(stateVec[i][1], less);
+                        stateVec[i][1] = Vector.Add(stateVec[i][1], Vector.Multiply(greater, -1));
+                    }
+                }
+
+                // move
+                for (int i = 0; i < 4; i++)
+                {
+                    stateVec[i][0] = Vector.Add(stateVec[i][1], stateVec[i][0]);
+                }
+
+                var eq = true;
+                for (int i = 0; i < 4; i++)
+                {
+                    if (!Vector.EqualsAll(stateVec[i][0], initStateVec[i][0])
+                        || !Vector.EqualsAll(stateVec[i][1], initStateVec[i][1]))
+                    {
+                        eq = false;
+                        break;
+                    }
+                }
+
+                if (eq)
+                    return counter.ToString();
+
+                //hashset.Add(tuple);
+            }
+        }
 
         private static Moon[] GetMoons(string inputFile)
         {
             var moonConfiguration = File.ReadAllLines(inputFile);
-            //var moonConfiguration = 
-            //    "<x=-1, y=0, z=2>\r\n<x=2, y=-10, z=-7>\r\n<x=4, y=-8, z=8>\r\n<x=3, y=5, z=-1>"
-            //    .Split(new [] {Environment.NewLine}, StringSplitOptions.None);
+            //var moonConfiguration =
+            //    "<x=-8, y=-10, z=0>\r\n<x=5, y=5, z=10>\r\n<x=2, y=-7, z=3>\r\n<x=9, y=-8, z=-3>"
+            //    .Split(new[] { Environment.NewLine }, StringSplitOptions.None);
 
 
             var moons = moonConfiguration
