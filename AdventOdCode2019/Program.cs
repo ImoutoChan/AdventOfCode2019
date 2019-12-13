@@ -34,8 +34,10 @@ namespace AdventOdCode2019
             //new Day10().CalculatePart2("input/day10.txt").Dump(nameof(Day10));
             //new Day11().CalculatePart1("input/day11.txt").Dump(nameof(Day11));
             //new Day11().CalculatePart2("input/day11.txt").Dump(nameof(Day11));
-            new Day12().CalculatePart1("input/day12.txt").Dump(nameof(Day12));
-            new Day12().CalculatePart2Vectors("input/day12.txt").Dump(nameof(Day12));
+            //new Day12().CalculatePart1("input/day12.txt").Dump(nameof(Day12));
+            //new Day12().CalculatePart2("input/day12.txt").Dump(nameof(Day12));
+            //new Day13().CalculatePart1("input/day13.txt").Dump(nameof(Day13));
+            new Day13().CalculatePart2("input/day13.txt").Dump(nameof(Day13));
         }
 
         private static void RunAlex()
