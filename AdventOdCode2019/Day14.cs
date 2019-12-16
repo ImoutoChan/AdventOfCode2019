@@ -14,15 +14,16 @@ namespace AdventOdCode2019
         public string CalculatePart1(string inputFile)
         {            
             var reactions = GetReactions(inputFile).ToList();
+            var dict = reactions.ToDictionary(x => x.Result.Key, x => x);
 
-            var fuelReaction = reactions.Single(x => x.Result.Key == "FUEL");
+            var fuelReaction = dict["FUEL"];
 
-            var result = GetCost(1, fuelReaction, reactions);
+            var result = GetCost(1, fuelReaction, dict);
 
             return result.ToString();
         }
 
-        private static int GetCost(int elementCount, Reaction reaction, IReadOnlyCollection<Reaction> reactions)
+        private static int GetCost(int elementCount, Reaction reaction, Dictionary<string, Reaction> reactions)
         {
             var reqs = reaction.Requirements;
             var resultCost = 0;
@@ -51,13 +52,14 @@ namespace AdventOdCode2019
                 _excesses[reaction.Result.Key] = current + (reaction.Result.Count - excess);
             }
 
-            foreach (var requirement in reqs)
+            for (var index = 0; index < reqs.Length; index++)
             {
+                var requirement = reqs[index];
                 if (requirement.Key == "ORE")
                     resultCost += requirement.Count * reactionsCount;
                 else
                 {
-                    var reqReaction = reactions.Single(x => x.Result.Key == requirement.Key);
+                    var reqReaction = reactions[requirement.Key];
                     resultCost += GetCost(requirement.Count * reactionsCount, reqReaction, reactions);
                 }
             }
@@ -70,7 +72,9 @@ namespace AdventOdCode2019
             var reactions = GetReactions(inputFile).ToList();
             _excesses = new Dictionary<string, int>();
 
-            var fuelReaction = reactions.Single(x => x.Result.Key == "FUEL");
+
+            var dict = reactions.ToDictionary(x => x.Result.Key, x => x);
+            var fuelReaction = dict["FUEL"];
 
             var oreTotal = 1000000000000;
             var fuels = 0;
@@ -79,7 +83,7 @@ namespace AdventOdCode2019
             sw.Start();
             do
             {
-                var cost = GetCost(1, fuelReaction, reactions);
+                var cost = GetCost(1, fuelReaction, dict);
                 oreTotal -= cost;
                 fuels++;
 
@@ -117,7 +121,7 @@ namespace AdventOdCode2019
                 var split = line.Split(new[] {"=>"}, StringSplitOptions.RemoveEmptyEntries);
                 var key = GetElement(split.Last());
                 var values = split.First().Split(new[] {", "}, StringSplitOptions.RemoveEmptyEntries);
-                yield return new Reaction(key, values.Select(GetElement).ToList());
+                yield return new Reaction(key, values.Select(GetElement).ToArray());
             }
         }
 
@@ -130,7 +134,7 @@ namespace AdventOdCode2019
 
     class Reaction
     {
-        public Reaction(ReactionElement result, IReadOnlyCollection<ReactionElement> requirements)
+        public Reaction(ReactionElement result, ReactionElement[] requirements)
         {
             Result = result;
             Requirements = requirements;
@@ -138,7 +142,7 @@ namespace AdventOdCode2019
 
         public ReactionElement Result { get; }
 
-        public IReadOnlyCollection<ReactionElement> Requirements { get; }
+        public ReactionElement[] Requirements { get; }
     }
 
     [DebuggerDisplay("{Key} {Count}")]
