@@ -37,9 +37,9 @@ namespace AdventOdCode2019
                     var lastReported = 0;
                     while (progress != inputLength)
                     {
-                        if (progress % 100 == 0)
+                        if (progress % 10000 == 0)
                         {
-                            var h = (progress - lastReported) / 100;
+                            var h = (progress - lastReported) / 10000;
                             if (h == 0)
                                 h = 1;
 
@@ -66,24 +66,45 @@ namespace AdventOdCode2019
                     var startPositive = patternMultiplier - 1;
                     var startNegative = patternMultiplier * 3 - 1;
                     var take = patternMultiplier;
+                    var takeM = patternMultiplier - 1;
 
                     for (int i = startPositive; i < inputLength; i += patternMultiplier4)
                     {
-                        for (int j = 0; j < take; j++)
+                        if (i + takeM < inputLength)
                         {
-                            var index = i + j;
-                            if (index < inputLength)
+                            for (int j = 0; j < take; j++)
+                            {
                                 sum += input[i + j];
+                            }
+                        }
+                        else
+                        {
+                            for (int j = 0; j < take; j++)
+                            {
+                                var index = i + j;
+                                if (index < inputLength)
+                                    sum += input[index];
+                            }
                         }
                     }
 
                     for (int i = startNegative; i < inputLength; i += patternMultiplier4)
                     {
-                        for (int j = 0; j < take; j++)
+                        if (i + takeM < inputLength)
                         {
-                            var index = i + j;
-                            if (index < inputLength)
+                            for (int j = 0; j < take; j++)
+                            {
                                 sum -= input[i + j];
+                            }
+                        }
+                        else
+                        {
+                            for (int j = 0; j < take; j++)
+                            {
+                                var index = i + j;
+                                if (index < inputLength)
+                                    sum -= input[index];
+                            }
                         }
                     }
 
@@ -105,6 +126,7 @@ namespace AdventOdCode2019
             for (int i = 0; i < phasesCount; i++)
             {
                 input = CalculatePhaseFast(input, repeatInput).ToArray();
+                Console.WriteLine("Phase: " + i);
             }
 
             return string.Join('_', input.Skip(int.Parse(skip)).Take(8));
@@ -112,8 +134,8 @@ namespace AdventOdCode2019
 
         private static int[] GetInput(string inputFile)
         {
-            //var programString = File.ReadAllLines(inputFile).First();
-            var programString = "03036732577212944063491565474664";
+            var programString = File.ReadAllLines(inputFile).First();
+            //var programString = "03036732577212944063491565474664";
             var program = programString.Select(x => (int)(x - '0')).ToArray();
             return program;
         }
