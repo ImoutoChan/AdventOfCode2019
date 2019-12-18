@@ -37,8 +37,10 @@ namespace AdventOdCode2019
                 {
                     var realIndex = GetPatternRealIndex(patternMultiplier, patternCurrentIndex);
 
-                    if (realIndex != 0 && realIndex != 2) 
-                        sum += pattern[realIndex] * input[inputIndex];
+                    if (realIndex == 1) 
+                        sum += input[inputIndex];
+                    else if (realIndex == 3)
+                        sum -= input[inputIndex];
 
                     patternCurrentIndex++;
                 }
