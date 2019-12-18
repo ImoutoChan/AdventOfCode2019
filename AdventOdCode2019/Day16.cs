@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace AdventOdCode2019
 {
@@ -15,56 +17,78 @@ namespace AdventOdCode2019
 
             for (int i = 0; i < phasesCount; i++)
             {
-                input = CalculatePhaseFast(input, 1).ToArray();
+                input = CalculatePhaseFast(input, 1);
             }
 
             return string.Join('_', input.Take(8));
         }
 
-        private static IEnumerable<int> CalculatePhaseFast(int[] input, int repeater)
+        private static int[] CalculatePhaseFast(int[] input, int repeater)
         {
             var pattern = new int[] {0, 1, 0, -1};
+            var inputLength = input.Length;
+            var result = new int[inputLength];
+            var progress = 0;
 
-            var sw = new Stopwatch();
-            sw.Start();
-            for (int resultDigitIndex = 0; resultDigitIndex < input.Length; resultDigitIndex++)
-            {
-                var patternMultiplier = resultDigitIndex + 1;
-                var patternMultiplier4 = patternMultiplier * 4;
-                var sum = 0;
-                var init = false;
-
-                for (int inputIndex = 0; inputIndex < input.Length; inputIndex++)
+            Task.Run(async () =>
                 {
-                    //var realIndex = GetPatternRealIndex(patternMultiplier, inputIndex + 1);
-                    var realIndex = ((inputIndex % patternMultiplier4) + 1) / patternMultiplier;
-                    //(index % (multiplier * 4)) / multiplier
-
-                    if (realIndex == 1)
-                    {
-                        sum += input[inputIndex];
-                        init = true;
-                    }
-                    else if (realIndex == 3)
-                    {
-                        sum -= input[inputIndex];
-                        init = true;
-                    }
-                    else if (init)
-                    {
-                        inputIndex += patternMultiplier - 1;
-                    }
-                }
-
-                if (resultDigitIndex % 100 == 0)
-                {
-                    Console.WriteLine(resultDigitIndex + " " + sw.ElapsedMilliseconds);
-                    sw.Reset();
+                    var sw = new Stopwatch();
                     sw.Start();
-                }
+                    var lastReported = 0;
+                    while (progress != inputLength)
+                    {
+                        if (progress % 100 == 0)
+                        {
+                            var h = (progress - lastReported) / 100;
+                            if (h == 0)
+                                h = 1;
 
-                yield return Math.Abs(sum % 10);
-            }
+                            Console.WriteLine(progress + " " + sw.ElapsedMilliseconds / h);
+                            lastReported = progress;
+
+                            sw.Reset();
+                            sw.Start();
+                            await Task.Delay(100);
+                        }
+                    }
+                });
+
+            Parallel.For(
+                0,
+                inputLength,
+                //new ParallelOptions {MaxDegreeOfParallelism = 1},
+                (resultDigitIndex) =>
+                {
+                    var patternMultiplier = resultDigitIndex + 1;
+                    var patternMultiplier4 = patternMultiplier * 4;
+                    var sum = 0;
+                    var init = false;
+
+                    for (int inputIndex = 0 + patternMultiplier - 1; inputIndex < inputLength; inputIndex++)
+                    {
+                        var realIndex = ((inputIndex % patternMultiplier4) + 1) / patternMultiplier;
+
+                        if (realIndex == 1)
+                        {
+                            sum += input[inputIndex];
+                            init = true;
+                        }
+                        else if (realIndex == 3)
+                        {
+                            sum -= input[inputIndex];
+                            init = true;
+                        }
+                        else if (init)
+                        {
+                            inputIndex += patternMultiplier - 1;
+                        }
+                    }
+
+                    result[resultDigitIndex] = Math.Abs(sum % 10);
+                    Interlocked.Increment(ref progress);
+                });
+
+            return result;
         }
 
         public string CalculatePart2(string inputFile)
