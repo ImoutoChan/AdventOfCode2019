@@ -30,19 +30,30 @@ namespace AdventOdCode2019
             for (int resultDigitIndex = 0; resultDigitIndex < input.Length; resultDigitIndex++)
             {
                 var patternMultiplier = resultDigitIndex + 1;
-                var patternCurrentIndex = 1;
+                var patternMultiplier4 = patternMultiplier * 4;
                 var sum = 0;
+                var init = false;
 
                 for (int inputIndex = 0; inputIndex < input.Length; inputIndex++)
                 {
-                    var realIndex = GetPatternRealIndex(patternMultiplier, patternCurrentIndex);
+                    //var realIndex = GetPatternRealIndex(patternMultiplier, inputIndex + 1);
+                    var realIndex = ((inputIndex % patternMultiplier4) + 1) / patternMultiplier;
+                    //(index % (multiplier * 4)) / multiplier
 
-                    if (realIndex == 1) 
+                    if (realIndex == 1)
+                    {
                         sum += input[inputIndex];
+                        init = true;
+                    }
                     else if (realIndex == 3)
+                    {
                         sum -= input[inputIndex];
-
-                    patternCurrentIndex++;
+                        init = true;
+                    }
+                    else if (init)
+                    {
+                        inputIndex += patternMultiplier - 1;
+                    }
                 }
 
                 if (resultDigitIndex % 100 == 0)
@@ -54,10 +65,6 @@ namespace AdventOdCode2019
 
                 yield return Math.Abs(sum % 10);
             }
-
-
-            int GetPatternRealIndex(int multiplier, int index)
-                => (index % (multiplier * 4)) / multiplier;
         }
 
         public string CalculatePart2(string inputFile)
