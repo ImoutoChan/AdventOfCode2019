@@ -15,71 +15,71 @@ namespace AdventOdCode2019
 
             for (int i = 0; i < phasesCount; i++)
             {
-                input = CalculatePhase(input).ToArray();
+                input = CalculatePhaseFast(input, 1).ToArray();
             }
 
             return string.Join('_', input.Take(8));
         }
 
-        private IEnumerable<int> CalculatePhase(int[] input)
+        private static IEnumerable<int> CalculatePhaseFast(int[] input, int repeater)
         {
-            for (int i = 0; i < input.Length; i++)
+            var pattern = new int[] {0, 1, 0, -1};
+
+            var sw = new Stopwatch();
+            sw.Start();
+            for (int resultDigitIndex = 0; resultDigitIndex < input.Length; resultDigitIndex++)
             {
-                var multiplier = i + 1;
-                using var pattern = GetCycledPattern(multiplier).GetEnumerator();
-                var result = 0;
-                foreach (var inputDigit in input)
+                var patternMultiplier = resultDigitIndex + 1;
+                var patternCurrentIndex = 1;
+                var sum = 0;
+
+                for (int inputIndex = 0; inputIndex < input.Length; inputIndex++)
                 {
-                    pattern.MoveNext();
-                    result += pattern.Current * inputDigit;
+                    var realIndex = GetPatternRealIndex(patternMultiplier, patternCurrentIndex);
+
+                    if (realIndex != 0 && realIndex != 2) 
+                        sum += pattern[realIndex] * input[inputIndex];
+
+                    patternCurrentIndex++;
                 }
 
-                yield return Math.Abs(result % 10);
+                if (resultDigitIndex % 100 == 0)
+                {
+                    Console.WriteLine(resultDigitIndex + " " + sw.ElapsedMilliseconds);
+                    sw.Reset();
+                    sw.Start();
+                }
+
+                yield return Math.Abs(sum % 10);
             }
+
+
+            int GetPatternRealIndex(int multiplier, int index)
+                => (index % (multiplier * 4)) / multiplier;
         }
 
         public string CalculatePart2(string inputFile)
         {
-            IEnumerable<int> input = GetInput(inputFile);
-
-            var inputReady = input.ToArray();
-
             var phasesCount = 100;
-            var skip = inputReady.Take(7).Aggregate("", (acc, x) => acc + x);
+            var repeatInput = 10_000;
+
+            var input = Enumerable.Repeat(GetInput(inputFile), 10000).SelectMany(x => x).ToArray();
 
             for (int i = 0; i < phasesCount; i++)
             {
-                inputReady = CalculatePhase(inputReady).ToArray();
+                input = CalculatePhaseFast(input, repeatInput).ToArray();
             }
 
-            return string.Join('_', inputReady.Skip(int.Parse(skip)).Take(8));
+            var skip = input.Take(7).Aggregate("", (acc, x) => acc + x);
+            return string.Join('_', input.Skip(int.Parse(skip)).Take(8));
         }
 
         private static int[] GetInput(string inputFile)
         {
             var programString = File.ReadAllLines(inputFile).First();
-            //var programString = "80871224585914546619083218645595";
-            var program = programString.Select(x => x - '0').ToArray();
+            //var programString = "00123456789001234567890012345678900123456789";
+            var program = programString.Select(x => (int)(x - '0')).ToArray();
             return program;
-        }
-
-        private static IEnumerable<int> GetCycledPattern(int multiplier) 
-            => GetPattern(multiplier).Skip(1);
-
-        private static IEnumerable<int> GetPattern(int multiplier)
-        {
-            var pattern = new[] {0, 1, 0, -1};
-
-            while (true)
-            {
-                foreach (var entry in pattern)
-                {
-                    for (int j = 0; j < multiplier; j++)
-                    {
-                        yield return entry;
-                    }
-                }
-            }
         }
     }
 }
