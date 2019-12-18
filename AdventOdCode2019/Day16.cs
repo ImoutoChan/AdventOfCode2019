@@ -62,25 +62,28 @@ namespace AdventOdCode2019
                     var patternMultiplier = resultDigitIndex + 1;
                     var patternMultiplier4 = patternMultiplier * 4;
                     var sum = 0;
-                    var init = false;
 
-                    for (int inputIndex = 0 + patternMultiplier - 1; inputIndex < inputLength; inputIndex++)
+                    var startPositive = patternMultiplier - 1;
+                    var startNegative = patternMultiplier * 3 - 1;
+                    var take = patternMultiplier;
+
+                    for (int i = startPositive; i < inputLength; i += patternMultiplier4)
                     {
-                        var realIndex = ((inputIndex % patternMultiplier4) + 1) / patternMultiplier;
+                        for (int j = 0; j < take; j++)
+                        {
+                            var index = i + j;
+                            if (index < inputLength)
+                                sum += input[i + j];
+                        }
+                    }
 
-                        if (realIndex == 1)
+                    for (int i = startNegative; i < inputLength; i += patternMultiplier4)
+                    {
+                        for (int j = 0; j < take; j++)
                         {
-                            sum += input[inputIndex];
-                            init = true;
-                        }
-                        else if (realIndex == 3)
-                        {
-                            sum -= input[inputIndex];
-                            init = true;
-                        }
-                        else if (init)
-                        {
-                            inputIndex += patternMultiplier - 1;
+                            var index = i + j;
+                            if (index < inputLength)
+                                sum -= input[i + j];
                         }
                     }
 
@@ -97,20 +100,20 @@ namespace AdventOdCode2019
             var repeatInput = 10_000;
 
             var input = Enumerable.Repeat(GetInput(inputFile), 10000).SelectMany(x => x).ToArray();
+            var skip = input.Take(7).Aggregate("", (acc, x) => acc + x);
 
             for (int i = 0; i < phasesCount; i++)
             {
                 input = CalculatePhaseFast(input, repeatInput).ToArray();
             }
 
-            var skip = input.Take(7).Aggregate("", (acc, x) => acc + x);
             return string.Join('_', input.Skip(int.Parse(skip)).Take(8));
         }
 
         private static int[] GetInput(string inputFile)
         {
-            var programString = File.ReadAllLines(inputFile).First();
-            //var programString = "00123456789001234567890012345678900123456789";
+            //var programString = File.ReadAllLines(inputFile).First();
+            var programString = "03036732577212944063491565474664";
             var program = programString.Select(x => (int)(x - '0')).ToArray();
             return program;
         }
