@@ -29,83 +29,57 @@ namespace AdventOdCode2019
             var inputLength = input.Length;
             var result = new int[inputLength];
             var progress = 0;
+            var cumSum = new int[inputLength];
+            cumSum[0] = input[0];
+            for (int i = 1; i < inputLength; i++)
+            {
+                cumSum[i] = cumSum[i - 1] + input[i];
+            }
 
             Task.Run(async () =>
                 {
                     var sw = new Stopwatch();
                     sw.Start();
-                    var lastReported = 0;
                     while (progress != inputLength)
                     {
-                        if (progress % 10000 == 0)
-                        {
-                            var h = (progress - lastReported) / 10000;
-                            if (h == 0)
-                                h = 1;
-
-                            Console.WriteLine(progress + " " + sw.ElapsedMilliseconds / h);
-                            lastReported = progress;
-
-                            sw.Reset();
-                            sw.Start();
-                            await Task.Delay(100);
-                        }
+                        Console.WriteLine(progress + " " + sw.ElapsedMilliseconds);
+                        await Task.Delay(100);
                     }
                 });
 
             Parallel.For(
                 0,
                 inputLength,
-                //new ParallelOptions {MaxDegreeOfParallelism = 1},
                 (resultDigitIndex) =>
                 {
                     var patternMultiplier = resultDigitIndex + 1;
-                    var patternMultiplier4 = patternMultiplier * 4;
+                    var patternMultiplier2 = patternMultiplier * 2;
                     var sum = 0;
 
-                    var startPositive = patternMultiplier - 1;
-                    var startNegative = patternMultiplier * 3 - 1;
+                    var startPositive = resultDigitIndex;
                     var take = patternMultiplier;
-                    var takeM = patternMultiplier - 1;
+                    var takeM = resultDigitIndex;
+                    var sign = 1;
 
-                    for (int i = startPositive; i < inputLength; i += patternMultiplier4)
+                    var cond = inputLength - takeM;
+                    var i = startPositive;
+
+                    if (i == 0)
                     {
-                        if (i + takeM < inputLength)
-                        {
-                            for (int j = 0; j < take; j++)
-                            {
-                                sum += input[i + j];
-                            }
-                        }
-                        else
-                        {
-                            for (int j = 0; j < take; j++)
-                            {
-                                var index = i + j;
-                                if (index < inputLength)
-                                    sum += input[index];
-                            }
-                        }
+                        sum += sign * cumSum[i + takeM];
+                        sign = -1 * sign;
+                        i += patternMultiplier2;
                     }
 
-                    for (int i = startNegative; i < inputLength; i += patternMultiplier4)
+                    for (; i < cond; i += patternMultiplier2)
                     {
-                        if (i + takeM < inputLength)
-                        {
-                            for (int j = 0; j < take; j++)
-                            {
-                                sum -= input[i + j];
-                            }
-                        }
-                        else
-                        {
-                            for (int j = 0; j < take; j++)
-                            {
-                                var index = i + j;
-                                if (index < inputLength)
-                                    sum -= input[index];
-                            }
-                        }
+                        sum += sign * (cumSum[i + takeM] - cumSum[i - 1]);
+                        sign = -1 * sign;
+                    }
+
+                    if (i < inputLength)
+                    {
+                        sum += sign * (cumSum[inputLength - 1] - cumSum[i - 1]);
                     }
 
                     result[resultDigitIndex] = Math.Abs(sum % 10);
