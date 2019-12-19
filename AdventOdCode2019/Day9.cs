@@ -68,7 +68,7 @@ namespace AdventOdCode2019
                 0);
         }
 
-        public long? Run(long input)
+        public long? Run(long? input)
         {
             var program = _program;
             var inputUsed = false;
@@ -97,10 +97,10 @@ namespace AdventOdCode2019
                         i += 4;
                         break;
                     case 3:
-                        if (inputUsed)
+                        if (inputUsed || !input.HasValue)
                             return null;
 
-                        WriteOp(modeMem1, i + 1, input);
+                        WriteOp(modeMem1, i + 1, input.Value);
                         inputUsed = true;
                         i += 2;
                         break;

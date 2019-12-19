@@ -19,7 +19,7 @@ namespace AdventOdCode2019
 
 
             var currentPoint = new PanelPoint(0, 0);
-            var currentDirection = PanelPointDirection.Up;
+            var currentDirection = Direction.Up;
             while (true)
             {
                 var color = painted[currentPoint];
@@ -53,7 +53,7 @@ namespace AdventOdCode2019
 
             var currentPoint = new PanelPoint(0, 0);
             painted[currentPoint] = 1;
-            var currentDirection = PanelPointDirection.Up;
+            var currentDirection = Direction.Up;
             while (true)
             {
                 var color = painted[currentPoint];
@@ -101,42 +101,42 @@ namespace AdventOdCode2019
             return program;
         }
 
-        private PanelPointDirection TurnLeft(PanelPointDirection current)
+        private Direction TurnLeft(Direction current)
         {
             switch (current)
             {
-                case PanelPointDirection.Up:
-                    return PanelPointDirection.Left;
-                case PanelPointDirection.Right:
-                    return PanelPointDirection.Up;
-                case PanelPointDirection.Down:
-                    return PanelPointDirection.Right;
-                case PanelPointDirection.Left:
-                    return PanelPointDirection.Down;
+                case Direction.Up:
+                    return Direction.Left;
+                case Direction.Right:
+                    return Direction.Up;
+                case Direction.Down:
+                    return Direction.Right;
+                case Direction.Left:
+                    return Direction.Down;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(current), current, null);
             }
         }
 
-        private PanelPointDirection TurnRight(PanelPointDirection current)
+        private Direction TurnRight(Direction current)
         {
             switch (current)
             {
-                case PanelPointDirection.Up:
-                    return PanelPointDirection.Right;
-                case PanelPointDirection.Right:
-                    return PanelPointDirection.Down;
-                case PanelPointDirection.Down:
-                    return PanelPointDirection.Left;
-                case PanelPointDirection.Left:
-                    return PanelPointDirection.Up;
+                case Direction.Up:
+                    return Direction.Right;
+                case Direction.Right:
+                    return Direction.Down;
+                case Direction.Down:
+                    return Direction.Left;
+                case Direction.Left:
+                    return Direction.Up;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(current), current, null);
             }
         }
     }
 
-    enum PanelPointDirection
+    enum Direction
     {
         Up,
         Right,
@@ -157,17 +157,17 @@ namespace AdventOdCode2019
             Y = y;
         }
 
-        public PanelPoint GetPoint(PanelPointDirection direction)
+        public PanelPoint GetPoint(Direction direction)
         {
             switch (direction)
             {
-                case PanelPointDirection.Up:
+                case Direction.Up:
                     return new PanelPoint(X, Y + 1);
-                case PanelPointDirection.Right:
+                case Direction.Right:
                     return new PanelPoint(X + 1, Y);
-                case PanelPointDirection.Down:
+                case Direction.Down:
                     return new PanelPoint(X, Y - 1);
-                case PanelPointDirection.Left:
+                case Direction.Left:
                     return new PanelPoint(X - 1, Y);
                 default:
                     throw new ArgumentOutOfRangeException(nameof(direction), direction, null);
